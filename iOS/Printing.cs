@@ -1,57 +1,84 @@
 ﻿namespace Zebble
 {
+    using CoreGraphics;
     using Foundation;
+    using Newtonsoft.Json;
+    using System;
     using System.Threading.Tasks;
     using UIKit;
 
     public partial class Printing
     {
+        static UIPrinter Printer;
+        static string PrinterUrl;
+
+
         /// <summary>
-        /// Print specefic image from a file or an url.
+        /// Trys to print the given file without any question to select the printer.
         /// </summary>
-        /// <param name="path">image file or url</param>
-        public static Task PrintImage(string path)
+        /// <param name="path">Image file or url</param>
+        /// <param name="printerUrl">The printer url</param>
+        /// <returns>Used printer`s absolute url for the next use.</returns>
+        public static async Task<string> TrySilentPrint(string path, string printerUrl = "")
         {
             var imageFile = GetFile(path);
 
             if (!imageFile.Exists)
             {
                 Device.Log.Error("The file is not exist");
-                return Task.CompletedTask;
+                return null;
             }
 
-            var printer = UIPrintInteractionController.SharedPrintController;
+            var printerUI = UIPrintInteractionController.SharedPrintController;
 
-            if (printer == null)
+            if (printerUI == null)
             {
                 Device.Log.Error("Unable to print at this time.");
+                return null;
             }
             else
             {
                 var printInfo = UIPrintInfo.PrintInfo;
                 printInfo.OutputType = UIPrintInfoOutputType.General;
                 printInfo.JobName = "Image is printing";
+                printInfo.Orientation = UIPrintInfoOrientation.Landscape;
 
-                printer.PrintInfo = printInfo;
-                printer.PrintingItem = NSUrl.FromFilename(imageFile.FullName);
-                printer.ShowsPageRange = true;
+                printerUI.PrintInfo = printInfo;
+                printerUI.PrintingItem = NSUrl.FromFilename(imageFile.FullName);
+                printerUI.ShowsPageRange = true;
 
-                var handler = new UIPrintInteractionCompletionHandler((printInteractionController, completed, error) =>
-                {
-                    if (completed)
-                    {
-                        Device.Log.Message("Print Completed.");
-                    }
-                    else if (!completed && error != null)
-                    {
-                        Device.Log.Message("Error Printing.");
-                    }
-                });
+                UIPrinter printer = await GetPrinter(printerUrl);
 
-                printer.Present(true, handler);
+                await printerUI.PrintToPrinterAsync(printer);
+                return printer.Url.AbsoluteString;
+            }
+        }
+
+        static async Task<UIPrinter> GetPrinter(string printerUrl)
+        {
+            if (PrinterUrl == printerUrl && Printer != null)
+                return Printer;
+
+            var printer = UIPrinter.FromUrl(new NSUrl(printerUrl));
+            var isthere = await printer.ContactPrinterAsync();
+            if (isthere)
+            {
+                PrinterUrl = printerUrl;
+                return Printer = printer;
             }
 
-            return Task.CompletedTask;
+            var printerPicker = UIPrinterPickerController.FromPrinter(null);
+
+            var callback = await printerPicker.PresentFromRectAsync(
+                new CGRect(0, 0, View.Root.ActualWidth, View.Root.ActualHeight / 4),
+                View.Root.Native(),
+                true);
+            //var callback = await printerPicker.PresentAsync(true);
+
+            printer = callback.PrinterPickerController.SelectedPrinter;
+            PrinterUrl = printer.Url.AbsoluteString;
+
+            return Printer = printer;
         }
     }
 }
