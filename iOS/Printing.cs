@@ -56,8 +56,11 @@
 
         static async Task<UIPrinter> GetPrinter(string printerUrl)
         {
-            if (PrinterUrl == printerUrl && Printer != null)
-                return Printer;
+            if (Device.OS.IsBeforeiOS(13))
+            {
+                if (PrinterUrl == printerUrl && Printer != null)
+                    return Printer;
+            }
 
             var printer = UIPrinter.FromUrl(new NSUrl(printerUrl));
             var isthere = await printer.ContactPrinterAsync();
