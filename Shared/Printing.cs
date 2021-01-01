@@ -2,6 +2,7 @@
 {
     using System;
     using System.IO;
+    using Olive;
 
     public partial class Printing
     {
@@ -10,8 +11,8 @@
             if (path.IsUrl())
             {
                 var ext = "png";
-                if (path.ToLower().EndsWith(".webp")) ext = "webp";
-                if (path.ToLower().EndsWithAny(".jpg", "jpeg")) ext = "jpg";
+                if (path.ToLower().EndsWith("webp")) ext = "webp";
+                if (path.ToLower().EndsWithAny("jpg", "jpeg")) ext = "jpg";
 
                 path = path.ToIOSafeHash();
                 path = Device.IO.Cache.GetFile($"{path}.{ext}").FullName;
