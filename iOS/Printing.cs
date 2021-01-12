@@ -2,16 +2,14 @@
 {
     using CoreGraphics;
     using Foundation;
-    using Newtonsoft.Json;
-    using System;
     using System.Threading.Tasks;
     using UIKit;
+    using Olive;
 
     public partial class Printing
     {
         static UIPrinter Printer;
         static string PrinterUrl;
-
 
         /// <summary>
         /// Trys to print the given file without any question to select the printer.
@@ -25,7 +23,7 @@
 
             if (!imageFile.Exists)
             {
-                Device.Log.Error("The file is not exist");
+                Log.For<Printing>().Error(null, "The file is not exist");
                 return null;
             }
 
@@ -33,7 +31,7 @@
 
             if (printerUI == null)
             {
-                Device.Log.Error("Unable to print at this time.");
+                Log.For<Printing>().Error(null, "Unable to print at this time.");
                 return null;
             }
             else
