@@ -23,7 +23,7 @@
 
             if (!imageFile.Exists)
             {
-                Log.For<Printing>().Error(null, "The file is not exist");
+                Log.For<Printing>().Error("The file is not exist");
                 return null;
             }
 
@@ -31,7 +31,7 @@
 
             if (printerUI == null)
             {
-                Log.For<Printing>().Error(null, "Unable to print at this time.");
+                Log.For<Printing>().Error("Unable to print at this time.");
                 return null;
             }
             else
